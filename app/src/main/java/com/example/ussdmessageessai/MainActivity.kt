@@ -18,6 +18,7 @@ import androidx.core.app.ComponentActivity
 import androidx.core.app.ComponentActivity.ExtraData
 import androidx.core.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.os.Build
 import android.text.TextUtils
 import android.widget.TextView
 import android.widget.Toast
@@ -35,10 +36,29 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        btn.setOnClickListener {
+            process()
+        }
+
+//        startService(Intent(this, OverlayService::class.java))
+
+
+//        val intent = Intent()
+//        intent.setAction("message")
+//        intent.putExtra("message", "Text")
+//        sendBroadcast(intent)
+
+        Log.d(TAG, "in activity")
+        val filter = IntentFilter("message")
+        this.registerReceiver(Receiver(), filter)
+        textDisplay = textView
+    }
+
+    private fun process(): Boolean {
         if (!isAccessibilitySettingsOn(this.baseContext)) {
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             startActivityForResult(intent, 0)
-        }else{
+        } else {
             startService(Intent(this, USSDService::class.java))
 
             val encodeStart = Uri.encode("#")
@@ -48,7 +68,19 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(Intent("android.intent.action.CALL", Uri.parse("tel:$ussd")), 1)
         }
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_SETTINGS) == PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_SMS
+            ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CALL_PHONE
+            ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECEIVE_SMS
+            ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_SETTINGS
+            ) == PackageManager.PERMISSION_GRANTED
         ) {
             Log.v("permissions", "Permission is granted")
 
@@ -67,28 +99,19 @@ class MainActivity : AppCompatActivity() {
             )
 
         }
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
-//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CALL_PHONE), call)
-//        }
+        //        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
+        //            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CALL_PHONE), call)
+        //        }
 
-        if (android.os.Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) {   //Android M Or Over
-            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))
+        if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) {   //Android M Or Over
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + getPackageName())
+            )
             startActivityForResult(intent, codeOverlay)
-            return
+            return true
         }
-
-//        startService(Intent(this, OverlayService::class.java))
-
-
-//        val intent = Intent()
-//        intent.setAction("message")
-//        intent.putExtra("message", "Text")
-//        sendBroadcast(intent)
-
-        Log.d(TAG, "in activity")
-        val filter = IntentFilter("message")
-        this.registerReceiver(Receiver(), filter)
-        textDisplay = textView
+        return false
     }
 
 
